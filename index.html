@@ -1,0 +1,308 @@
+<html>
+<head>
+<title>Bomb2!</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script type="text/javascript" src="jquery-1.2.6.min.js"></script>
+<script type="text/javascript" src="jquery.rightClick.js"></script>
+<script type="text/javascript" src="jquery.disable.text.select.pack.js"></script>
+<script type="text/javascript">
+
+var tableCol = 30;
+var tableRow = 16;
+var bomb = 99;
+var box;
+var status;
+var gameStatus = 0;
+
+var drawTable = function() {
+	box = Array(tableRow);
+	status = Array(tableRow);
+	var genTable = '<table border="1" class="bombTable">';
+	for (var x=0; x<tableRow; x++) {
+		box[x] = Array(tableCol);
+		status[x] = Array(tableCol);
+		genTable += '<tr>';
+		for (var y=0; y<tableCol; y++) {
+			box[x][y] = "";
+			status[x][y] = 0;
+			genTable += '<td id="x'+x+'y'+y+'"></td>';
+		}
+		genTable += '</tr>';
+	}
+	genTable += '</table>';
+	$("#table").html(genTable);
+}
+
+var genBomb = function(x, y) {
+	var rand_col;
+	var rand_row;
+	for (var i=0; i<bomb; i++) {
+		rand_col = Math.ceil((Math.random() * tableCol) -1);
+		rand_row = Math.ceil((Math.random() * tableRow) -1);
+		if (box[rand_row][rand_col] == "B" || (rand_row == x && rand_col == y)) {
+			i --;
+		} else {
+			box[rand_row][rand_col] = "B";
+		}
+	}
+}
+
+var genHints = function() {
+	var hints;
+	for (var x=0; x<tableRow; x++) {
+		for (var y=0; y<tableCol; y++) {
+			if (box[x][y] != "B") {
+				hints = 0;
+				if (x-1>=0 && y-1>=0 && box[x-1][y-1] == "B") {
+					hints ++;
+				}
+				if (x-1>=0 && box[x-1][y] == "B") {
+					hints ++;
+				}
+				if (x-1>=0 && y+1<tableCol && box[x-1][y+1] == "B") {
+					hints ++;
+				}
+				if (y-1>=0 && box[x][y-1] == "B") {
+					hints ++;
+				}
+				if (y+1<tableCol && box[x][y+1] == "B") {
+					hints ++;
+				}
+				if (x+1<tableRow && y-1>=0 && box[x+1][y-1] == "B") {
+					hints ++;
+				}
+				if (x+1<tableRow && box[x+1][y] == "B") {
+					hints ++;
+				}
+				if (x+1<tableRow && y+1<tableCol && box[x+1][y+1] == "B") {
+					hints ++;
+				}
+				box[x][y] = hints;
+			}
+		}
+	}
+}
+
+var gameOver = function() {
+	gameStatus = 2;
+	for (var x=0; x<tableRow; x++) {
+		for (var y=0; y<tableCol; y++) {
+			if (box[x][y] == "B" && status[x][y] != 1) { //no flag and is bomb
+				status[x][y] = 2;
+				display(x, y);
+			} else if (status[x][y] == 1 && box[x][y] != "B") { //flagged but not a bomb
+				display(x, y);
+			}
+		}
+	}
+}
+
+var display = function(x, y) {
+	if (box[x][y] == "B") {
+		$("#x"+x+"y"+y).css("backgroundColor", "#EEEEEE").html('<img src="bomb.gif">');
+	} else if (status[x][y] == 1) {
+		$("#x"+x+"y"+y).css("color", "red").html('<img src="notBomb.gif">');
+	} else if (box[x][y] == 0) {
+		$("#x"+x+"y"+y).css("backgroundColor", "#EEEEEE").text("");
+	} else if (box[x][y] == "1") {
+		$("#x"+x+"y"+y).css("backgroundColor", "#EEEEEE").css("color", "blue").text("1");
+	} else if (box[x][y] == "2") {
+		$("#x"+x+"y"+y).css("backgroundColor", "#EEEEEE").css("color", "green").text("2");
+	} else if (box[x][y] == "3") {
+		$("#x"+x+"y"+y).css("backgroundColor", "#EEEEEE").css("color", "red").text("3");
+	} else if (box[x][y] == "4") {
+		$("#x"+x+"y"+y).css("backgroundColor", "#EEEEEE").css("color", "darkblue").text("4");
+	} else if (box[x][y] == "5") {
+		$("#x"+x+"y"+y).css("backgroundColor", "#EEEEEE").css("color", "darkred").text("5");
+	} else if (box[x][y] == "6") {
+		$("#x"+x+"y"+y).css("backgroundColor", "#EEEEEE").css("color", "#008080").text("6");
+	} else if (box[x][y] == "7") {
+		$("#x"+x+"y"+y).css("backgroundColor", "#EEEEEE").css("color", "black").text("7");
+	} else if (box[x][y] == "8") {
+		$("#x"+x+"y"+y).css("backgroundColor", "#EEEEEE").css("color", "gray").text("8");
+	}
+	status[x][y] = 2;
+}
+
+function guess(x, y) {
+	if (gameStatus != 2) { //not yet game over
+		if (gameStatus == 0) { //start the game now
+			genBomb(x,y);
+			genHints();
+			gameStatus = 1;
+		}
+		if (status[x][y] == 0) { //the box is not flagged && not yet display
+			display(x, y);
+			if (box[x][y] == "B") { //BOMB!
+				gameOver();
+				$("#x"+x+"y"+y).css("backgroundColor", "red");
+				return false;
+			} else if (box[x][y] == "0") {
+				if (x-1>=0 && y-1>=0 && status[x-1][y-1] == 0) { //左上
+					guess(x-1, y-1);
+				}
+				if (x-1>=0 && status[x-1][y] == 0) { //上
+					guess(x-1, y);
+				}
+				if (x-1>=0 && y+1<tableCol && status[x-1][y+1] == 0) { //右上
+					guess(x-1, y+1);
+				}
+				if (y-1>=0 && status[x][y-1] == 0) { //左
+					guess(x, y-1);
+				}
+				if (y+1<tableCol && status[x][y+1] == 0) { //右
+					guess(x, y+1);
+				}
+				if (x+1<tableRow && y-1>=0 && status[x+1][y-1] == 0) { //左下
+					guess(x+1, y-1);
+				}
+				if (x+1<tableRow && status[x+1][y] == 0) { //下
+					guess(x+1, y);
+				}
+				if (x+1<tableRow && y+1<tableCol && status[x+1][y+1] == 0) { //右下
+					guess(x+1, y+1);
+				}
+			}
+			checkWin();
+		}
+	}
+}
+
+var flag = function(el) {
+	if (gameStatus != 2) { //not yet game over
+		var id = $(el).attr("id");
+		var x = parseInt(id.substr(1, id.search("y")-1));
+		var y = parseInt(id.substr(id.search("y")+1));
+		if (status[x][y] == 0) { //flag
+			status[x][y] = 1;
+			$("#"+id).html('<img src="flag.gif">');
+		} else if (status[x][y] == 1) { //deflag
+			status[x][y] = 0;
+			$("#"+id).text("");
+		}
+		bombLeft();
+	}
+}
+
+var bombLeft = function() {
+	var flagged = 0;
+	for (var x=0; x<tableRow; x++) {
+		for (var y=0; y<tableCol; y++) {
+			if (status[x][y] == 1) {
+				flagged ++;
+			}
+		}
+	}
+	$("#bombLeft").text(bomb - flagged);
+}
+
+var init = function() {
+	gameStatus = 0;
+	drawTable();
+	$("#bombLeft").text(bomb);
+	$(".bombTable td")
+	.unbind()
+	.disableTextSelect()
+	.noContext()
+	.bind("click", function() {
+		guess(parseInt($(this).attr("id").substr(1, $(this).attr("id").search("y")-1)), parseInt($(this).attr("id").substr($(this).attr("id").search("y")+1)));
+	})
+	.rightClick(function(el) {
+		flag(el);
+	});
+}
+
+var isInteger = function(s) {
+	return (s.toString().search(/^-?[0-9]+$/) == 0);
+}
+
+var checkWin = function() {
+	if (gameStatus == 1) {
+		var close = 0;
+		for (var x=0; x<tableRow; x++) {
+			for (var y=0; y<tableCol; y++) {
+				if (status[x][y] != 2) { //not yet open
+					close ++;
+				}
+				if (close > bomb) {
+					return false;
+				}
+			}
+		}
+		//set all closed to flag
+		for (var x=0; x<tableRow; x++) {
+			for (var y=0; y<tableCol; y++) {
+				if (box[x][y] == "B") {
+					status[x][y] = 1;
+					$("#x"+x+"y"+y).html('<img src="flag.gif">');
+				}
+			}
+		}
+		gameStatus = 2;
+		bombLeft();
+		alert("Win!");
+	}
+}
+
+$(document).ready(function(){
+	$("#width").val(tableCol);
+	$("#height").val(tableRow);
+	$("#bomb").val(bomb);
+	$("#set").click(function() {
+		if (!isInteger($("#width").val()) || !isInteger($("#height").val()) || !isInteger($("#bomb").val())) {
+			alert('Please input an integer.');
+		} else if (parseInt($("#width").val()) * parseInt($("#height").val()) <= parseInt($("#bomb").val())) {
+			alert('Bomb more than (or equal to) cell...');
+		} else {
+			tableCol = parseInt($("#width").val());
+			tableRow = parseInt($("#height").val());
+			bomb = parseInt($("#bomb").val());
+			init();
+		}
+	});
+	init();
+});
+
+</script>
+<style type="text/css">
+.bombTable {
+	cursor: default;
+	border-width: 4px;
+	border-style: outset;
+	border-color: gray;
+	border-collapse: collapse;
+	background-color: white;
+}
+.bombTable th {
+	border-width: 4px;
+	padding: 1px;
+	border-style: inset;
+	border-color: gray;
+	background-color: white;
+}
+.bombTable td {
+	font-weight: bold;
+	width: 28px;
+	height: 28px;
+	text-align: center;
+	border-width: 4px;
+	padding: 1px;
+	border-style: inset;
+	border-color: gray;
+	background-color: #CCCCCC;
+}
+</style>
+</head>
+<body bgcolor="#EEEEEE">
+<form>
+Width:<input type="text" size="3" maxlength="2" id="width">
+Height:<input type="text" size="3" maxlength="2" id="height">
+Bomb:<input type="text" size="3" maxlength="3" id="bomb">
+<input type="button" value="Set" id="set">
+</form>
+<hr/>
+Left: <span id="bombLeft"></span>
+<hr/>
+<div id="table"></div>
+</body>
+</html>
