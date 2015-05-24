@@ -11,20 +11,20 @@ var tableCol = 30;
 var tableRow = 16;
 var bomb = 99;
 var box;
-var status;
+var box_status;
 var gameStatus = 0;
 
 var drawTable = function() {
 	box = Array(tableRow);
-	status = Array(tableRow);
+	box_status = Array(tableRow);
 	var genTable = '<table border="1" class="bombTable">';
 	for (var x=0; x<tableRow; x++) {
 		box[x] = Array(tableCol);
-		status[x] = Array(tableCol);
+		box_status[x] = Array(tableCol);
 		genTable += '<tr>';
 		for (var y=0; y<tableCol; y++) {
 			box[x][y] = "";
-			status[x][y] = 0;
+			box_status[x][y] = 0;
 			genTable += '<td id="x'+x+'y'+y+'"></td>';
 		}
 		genTable += '</tr>';
@@ -87,10 +87,10 @@ var gameOver = function() {
 	gameStatus = 2;
 	for (var x=0; x<tableRow; x++) {
 		for (var y=0; y<tableCol; y++) {
-			if (box[x][y] == "B" && status[x][y] != 1) { //no flag and is bomb
-				status[x][y] = 2;
+			if (box[x][y] == "B" && box_status[x][y] != 1) { //no flag and is bomb
+				box_status[x][y] = 2;
 				display(x, y);
-			} else if (status[x][y] == 1 && box[x][y] != "B") { //flagged but not a bomb
+			} else if (box_status[x][y] == 1 && box[x][y] != "B") { //flagged but not a bomb
 				display(x, y);
 			}
 		}
@@ -100,7 +100,7 @@ var gameOver = function() {
 var display = function(x, y) {
 	if (box[x][y] == "B") {
 		$("#x"+x+"y"+y).css("backgroundColor", "#EEEEEE").html('<img src="bomb.gif">');
-	} else if (status[x][y] == 1) {
+	} else if (box_status[x][y] == 1) {
 		$("#x"+x+"y"+y).css("color", "red").html('<img src="notBomb.gif">');
 	} else if (box[x][y] == 0) {
 		$("#x"+x+"y"+y).css("backgroundColor", "#EEEEEE").text("");
@@ -121,7 +121,7 @@ var display = function(x, y) {
 	} else if (box[x][y] == "8") {
 		$("#x"+x+"y"+y).css("backgroundColor", "#EEEEEE").css("color", "gray").text("8");
 	}
-	status[x][y] = 2;
+	box_status[x][y] = 2;
 }
 
 function guess(x, y) {
@@ -131,35 +131,35 @@ function guess(x, y) {
 			genHints();
 			gameStatus = 1;
 		}
-		if (status[x][y] == 0) { //the box is not flagged && not yet display
+		if (box_status[x][y] == 0) { //the box is not flagged && not yet display
 			display(x, y);
 			if (box[x][y] == "B") { //BOMB!
 				gameOver();
 				$("#x"+x+"y"+y).css("backgroundColor", "red");
 				return false;
 			} else if (box[x][y] == "0") {
-				if (x-1>=0 && y-1>=0 && status[x-1][y-1] == 0) { //左上
+				if (x-1>=0 && y-1>=0 && box_status[x-1][y-1] == 0) { //左上
 					guess(x-1, y-1);
 				}
-				if (x-1>=0 && status[x-1][y] == 0) { //上
+				if (x-1>=0 && box_status[x-1][y] == 0) { //上
 					guess(x-1, y);
 				}
-				if (x-1>=0 && y+1<tableCol && status[x-1][y+1] == 0) { //右上
+				if (x-1>=0 && y+1<tableCol && box_status[x-1][y+1] == 0) { //右上
 					guess(x-1, y+1);
 				}
-				if (y-1>=0 && status[x][y-1] == 0) { //左
+				if (y-1>=0 && box_status[x][y-1] == 0) { //左
 					guess(x, y-1);
 				}
-				if (y+1<tableCol && status[x][y+1] == 0) { //右
+				if (y+1<tableCol && box_status[x][y+1] == 0) { //右
 					guess(x, y+1);
 				}
-				if (x+1<tableRow && y-1>=0 && status[x+1][y-1] == 0) { //左下
+				if (x+1<tableRow && y-1>=0 && box_status[x+1][y-1] == 0) { //左下
 					guess(x+1, y-1);
 				}
-				if (x+1<tableRow && status[x+1][y] == 0) { //下
+				if (x+1<tableRow && box_status[x+1][y] == 0) { //下
 					guess(x+1, y);
 				}
-				if (x+1<tableRow && y+1<tableCol && status[x+1][y+1] == 0) { //右下
+				if (x+1<tableRow && y+1<tableCol && box_status[x+1][y+1] == 0) { //右下
 					guess(x+1, y+1);
 				}
 			}
@@ -173,11 +173,11 @@ var flag = function(el) {
 		var id = $(el).attr("id");
 		var x = parseInt(id.substr(1, id.search("y")-1));
 		var y = parseInt(id.substr(id.search("y")+1));
-		if (status[x][y] == 0) { //flag
-			status[x][y] = 1;
+		if (box_status[x][y] == 0) { //flag
+			box_status[x][y] = 1;
 			$("#"+id).html('<img src="flag.gif">');
-		} else if (status[x][y] == 1) { //deflag
-			status[x][y] = 0;
+		} else if (box_status[x][y] == 1) { //deflag
+			box_status[x][y] = 0;
 			$("#"+id).text("");
 		}
 		bombLeft();
@@ -188,7 +188,7 @@ var bombLeft = function() {
 	var flagged = 0;
 	for (var x=0; x<tableRow; x++) {
 		for (var y=0; y<tableCol; y++) {
-			if (status[x][y] == 1) {
+			if (box_status[x][y] == 1) {
 				flagged ++;
 			}
 		}
@@ -221,7 +221,7 @@ var checkWin = function() {
 		var close = 0;
 		for (var x=0; x<tableRow; x++) {
 			for (var y=0; y<tableCol; y++) {
-				if (status[x][y] != 2) { //not yet open
+				if (box_status[x][y] != 2) { //not yet open
 					close ++;
 				}
 				if (close > bomb) {
@@ -233,7 +233,7 @@ var checkWin = function() {
 		for (var x=0; x<tableRow; x++) {
 			for (var y=0; y<tableCol; y++) {
 				if (box[x][y] == "B") {
-					status[x][y] = 1;
+					box_status[x][y] = 1;
 					$("#x"+x+"y"+y).html('<img src="flag.gif">');
 				}
 			}
